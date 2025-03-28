@@ -1,9 +1,9 @@
-from db_config import create_engine_,close_connection,insert_df_new_engine
+from db_config import close_connection,insert_df_new_engine
 from query import queries
 from sqlalchemy import create_engine,text
 from datetime import datetime
 from tabulate import tabulate
-from email_sender import enviar_email
+from email_sender import enviar_relatorio_email
 import pandas as pd
 
 
@@ -40,7 +40,7 @@ def main():
                   assunto = f"Diferenças Orçamento - {datetime.now().strftime('%d/%m/%Y')}"
                   corpo = df2.to_html(index=False, justify="center", border=1, classes="table table-striped table-bordered")
                   if not df2.empty:
-                        enviar_email(destinatario, assunto, corpo)
+                        enviar_relatorio_email(destinatario, assunto, df2)
                         print(tabulate(df2, headers="keys",tablefmt="fancy_grid"))
                   if df2.empty:
                         print(f"DataFrame de diferenças vazio")
