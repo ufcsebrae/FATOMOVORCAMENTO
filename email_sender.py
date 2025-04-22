@@ -1,4 +1,5 @@
 import win32com.client as win32
+import os
 from jinja2 import Environment, FileSystemLoader
 from datetime import datetime
 
@@ -14,7 +15,10 @@ def enviar_relatorio_email(destinatario, ASSUNTO, dataframeTOTAL,dataframeCC,dat
     dataframeTOTAL["VALOR_DIA_ANTERIOR"] = dataframeTOTAL["VALOR_DIA_ANTERIOR"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     dataframeTOTAL["DIFERENCA"] = dataframeTOTAL["DIFERENCA"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-    env = Environment(loader=FileSystemLoader("C:/Users/e_gabrielapr/teste/Movimento Orçamento/FATOMOVORCAMENTO"))
+
+    # Obtendo o caminho da pasta atual
+    caminho_atual = os.path.dirname(os.path.abspath(__file__))
+    env = Environment(loader=FileSystemLoader(caminho_atual))
     try:
         template = env.get_template("email_template.html")
     except Exception as e:
