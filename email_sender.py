@@ -29,7 +29,7 @@ def enviar_relatorio_email(destinatario, ASSUNTO, dataframeTOTAL,dataframeCC,dat
         assunto=ASSUNTO,    
         tabelas=dataframeTOTAL.to_html(index=False, justify="center", border=1, classes="table table-striped table-bordered"),
         tabelasCC=dataframeCC.to_html(index=False, justify="center", border=1, classes="table table-striped table-bordered"),
-        tabelasID=dataframeCC.to_html(index=False, justify="center", border=1, classes="table table-striped table-bordered"),
+        tabelasID=dataframeID.to_html(index=False, justify="center", border=1, classes="table table-striped table-bordered"),
         texto_email=TEXTO_CORPO
     )
 
