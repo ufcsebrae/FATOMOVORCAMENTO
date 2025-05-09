@@ -16,96 +16,157 @@ queries = {
         ) B ON A.IDORCAMENTO = B.IDORCAMENTO
         ORDER BY A.IDORCAMENTO, SEQITMORCA ASC
     """,
-    
-    "diferencas": """   
-        WITH Comparacao AS (
+
+    "diferencas": """
+        
+        WITH dias AS (
             SELECT 
-                a.IDORCAMENTO,
-                a.SEQITMORCA,
-                a.CODCCUSTO,
+                MAX(data_atualizacao) AS data_atual,
+                DATEADD(DAY, -1, MAX(data_atualizacao)) AS data_anterior
+            FROM orcado
+        ),
+        orcado_dia_atual AS (
+            SELECT IDORCAMENTO, SEQITMORCA, CODCCUSTO, VALORORCADO, data_atualizacao
+            FROM orcado o
+            JOIN dias d ON o.data_atualizacao = d.data_atual
+        ),
+        orcado_dia_anterior AS (
+            SELECT IDORCAMENTO, SEQITMORCA, CODCCUSTO, VALORORCADO, data_atualizacao
+            FROM orcado o
+            JOIN dias d ON o.data_atualizacao = d.data_anterior
+        ),
+        Comparacao AS (
+            SELECT 
+                COALESCE(a.IDORCAMENTO, b.IDORCAMENTO) AS IDORCAMENTO,
+                COALESCE(a.SEQITMORCA, b.SEQITMORCA) AS SEQITMORCA,
+                COALESCE(a.CODCCUSTO, b.CODCCUSTO) AS CODCCUSTO,
                 a.VALORORCADO AS VALOR_DIA_ATUAL,
                 b.VALORORCADO AS VALOR_DIA_ANTERIOR,
-                a.VALORORCADO - b.VALORORCADO AS DIFERENCA,
+                ISNULL(a.VALORORCADO, 0) - ISNULL(b.VALORORCADO, 0) AS DIFERENCA,
                 a.data_atualizacao AS DATA_ATUAL,
                 b.data_atualizacao AS DATA_ANTERIOR
-            FROM orcado a
-            JOIN orcado b
+            FROM orcado_dia_atual a
+            FULL OUTER JOIN orcado_dia_anterior b
                 ON a.IDORCAMENTO = b.IDORCAMENTO
                 AND a.SEQITMORCA = b.SEQITMORCA
                 AND a.CODCCUSTO = b.CODCCUSTO
-                AND a.data_atualizacao = DATEADD(DAY, 1, b.data_atualizacao)
         )
-        
+
         SELECT *
-        FROM Comparacao 
-        WHERE DIFERENCA <> 0
-        AND DATA_ATUAL = (SELECT MAX(DATA_ATUAL) FROM Comparacao)
-        ORDER BY IDORCAMENTO, SEQITMORCA, CODCCUSTO, DATA_ATUAL DESC
+        FROM Comparacao
+        WHERE ISNULL(DIFERENCA, 0) <> 0
+        ORDER BY IDORCAMENTO, SEQITMORCA, CODCCUSTO, DATA_ATUAL DESC;
     """,
-    
+
     "CC": """
-        WITH Comparacao AS (
+        WITH dias AS (
             SELECT 
-                a.IDORCAMENTO,
-                a.SEQITMORCA,
-                a.CODCCUSTO,
+                MAX(data_atualizacao) AS data_atual,
+                DATEADD(DAY, -1, MAX(data_atualizacao)) AS data_anterior
+            FROM orcado
+        ),
+        orcado_dia_atual AS (
+            SELECT 
+                IDORCAMENTO,
+                SEQITMORCA,
+                CODCCUSTO,
+                VALORORCADO,
+                data_atualizacao
+            FROM orcado o
+            JOIN dias d ON o.data_atualizacao = d.data_atual
+        ),
+        orcado_dia_anterior AS (
+            SELECT 
+                IDORCAMENTO,
+                SEQITMORCA,
+                CODCCUSTO,
+                VALORORCADO,
+                data_atualizacao
+            FROM orcado o
+            JOIN dias d ON o.data_atualizacao = d.data_anterior
+        ),
+        Comparacao AS (
+            SELECT 
+                COALESCE(a.IDORCAMENTO, b.IDORCAMENTO) AS IDORCAMENTO,
+                COALESCE(a.SEQITMORCA, b.SEQITMORCA) AS SEQITMORCA,
+                COALESCE(a.CODCCUSTO, b.CODCCUSTO) AS CODCCUSTO,
                 a.VALORORCADO AS VALOR_DIA_ATUAL,
                 b.VALORORCADO AS VALOR_DIA_ANTERIOR,
-                a.VALORORCADO - b.VALORORCADO AS DIFERENCA,
+                ISNULL(a.VALORORCADO, 0) - ISNULL(b.VALORORCADO, 0) AS DIFERENCA,
                 a.data_atualizacao AS DATA_ATUAL,
                 b.data_atualizacao AS DATA_ANTERIOR
-            FROM orcado a
-            JOIN orcado b
+            FROM orcado_dia_atual a
+            FULL OUTER JOIN orcado_dia_anterior b
                 ON a.IDORCAMENTO = b.IDORCAMENTO
                 AND a.SEQITMORCA = b.SEQITMORCA
                 AND a.CODCCUSTO = b.CODCCUSTO
-                AND a.data_atualizacao = DATEADD(DAY, 1, b.data_atualizacao)
         )
-        
+
         SELECT
-			UPPER(B.CAMPOLIVRE) AS PROJETO,
-			UPPER(C.CAMPOLIVRE) AS ACAO,
+            UPPER(B.CAMPOLIVRE) AS PROJETO,
+            UPPER(C.CAMPOLIVRE) AS ACAO,
             A.CODCCUSTO, 
             SUM(DIFERENCA) AS TOTAL_DIFERENCA
         FROM Comparacao A
-		INNER JOIN (SELECT CODCCUSTO,CAMPOLIVRE FROM HubDados.CorporeRM.GCCUSTO WHERE lEN(CODCCUSTO) = 5) B
-		ON LEFT(A.CODCCUSTO,5) COLLATE SQL_Latin1_General_CP1_CI_AI = B.CODCCUSTO
-		INNER JOIN (SELECT CODCCUSTO,CAMPOLIVRE FROM HubDados.CorporeRM.GCCUSTO WHERE lEN(CODCCUSTO) = 12) C
-		ON A.CODCCUSTO COLLATE SQL_Latin1_General_CP1_CI_AI = C.CODCCUSTO
+        LEFT JOIN (
+            SELECT CODCCUSTO, CAMPOLIVRE 
+            FROM HubDados.CorporeRM.GCCUSTO 
+            WHERE LEN(CODCCUSTO) = 5
+        ) B
+            ON LEFT(A.CODCCUSTO, 5) COLLATE SQL_Latin1_General_CP1_CI_AI = B.CODCCUSTO
+        LEFT JOIN (
+            SELECT CODCCUSTO, CAMPOLIVRE 
+            FROM HubDados.CorporeRM.GCCUSTO 
+            WHERE LEN(CODCCUSTO) = 12
+        ) C
+            ON A.CODCCUSTO COLLATE SQL_Latin1_General_CP1_CI_AI = C.CODCCUSTO
 
-
-        WHERE DIFERENCA <> 0
-        AND DATA_ATUAL = (SELECT MAX(DATA_ATUAL) FROM Comparacao)
-        GROUP BY C.CAMPOLIVRE,B.CAMPOLIVRE,A.CODCCUSTO
-        ORDER BY TOTAL_DIFERENCA DESC
+        WHERE ISNULL(DIFERENCA, 0) <> 0
+        GROUP BY C.CAMPOLIVRE, B.CAMPOLIVRE, A.CODCCUSTO
+        ORDER BY A.CODCCUSTO, TOTAL_DIFERENCA DESC;
     """,
-    
+
     "ID": """
-        WITH Comparacao AS (
+        
+        WITH dias AS (
             SELECT 
-                a.IDORCAMENTO,
-                a.SEQITMORCA,
-                a.CODCCUSTO,
+                MAX(data_atualizacao) AS data_atual,
+                DATEADD(DAY, -1, MAX(data_atualizacao)) AS data_anterior
+            FROM orcado
+        ),
+        orcado_dia_atual AS (
+            SELECT IDORCAMENTO, SEQITMORCA, CODCCUSTO, VALORORCADO, data_atualizacao
+            FROM orcado o
+            JOIN dias d ON o.data_atualizacao = d.data_atual
+        ),
+        orcado_dia_anterior AS (
+            SELECT IDORCAMENTO, SEQITMORCA, CODCCUSTO, VALORORCADO, data_atualizacao
+            FROM orcado o
+            JOIN dias d ON o.data_atualizacao = d.data_anterior
+        ),
+        Comparacao AS (
+            SELECT 
+                COALESCE(a.IDORCAMENTO, b.IDORCAMENTO) AS IDORCAMENTO,
+                COALESCE(a.SEQITMORCA, b.SEQITMORCA) AS SEQITMORCA,
+                COALESCE(a.CODCCUSTO, b.CODCCUSTO) AS CODCCUSTO,
                 a.VALORORCADO AS VALOR_DIA_ATUAL,
                 b.VALORORCADO AS VALOR_DIA_ANTERIOR,
-                a.VALORORCADO - b.VALORORCADO AS DIFERENCA,
+                ISNULL(a.VALORORCADO, 0) - ISNULL(b.VALORORCADO, 0) AS DIFERENCA,
                 a.data_atualizacao AS DATA_ATUAL,
                 b.data_atualizacao AS DATA_ANTERIOR
-            FROM orcado a
-            JOIN orcado b
+            FROM orcado_dia_atual a
+            FULL OUTER JOIN orcado_dia_anterior b
                 ON a.IDORCAMENTO = b.IDORCAMENTO
                 AND a.SEQITMORCA = b.SEQITMORCA
                 AND a.CODCCUSTO = b.CODCCUSTO
-                AND a.data_atualizacao = DATEADD(DAY, 1, b.data_atualizacao)
         )
-        
+
         SELECT 
             IDORCAMENTO, 
             SUM(DIFERENCA) AS TOTAL_DIFERENCA
         FROM Comparacao
-        WHERE DIFERENCA <> 0
-        AND DATA_ATUAL = (SELECT MAX(DATA_ATUAL) FROM Comparacao)
+        WHERE ISNULL(DIFERENCA, 0) <> 0
         GROUP BY IDORCAMENTO
-        ORDER BY TOTAL_DIFERENCA DESC
+        ORDER BY TOTAL_DIFERENCA DESC;
     """
 }
