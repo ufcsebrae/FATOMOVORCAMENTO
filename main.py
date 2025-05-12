@@ -59,7 +59,7 @@ def main():
                   destinatario = "orcamento@sp.sebrae.com.br"
                   assunto = f"Diferenças Orçamento - {datetime.now().strftime('%d/%m/%Y')}"
                   
-                  if not df2.empty and len(df2) > 100:
+                  if not df2.empty and len(df2) < 100:
                         enviar_relatorio_email(destinatario, assunto, df2,df3,df4)
                         print(f"Essa é a tabela DIFERENCAS:\n\n{tabulate(df2, headers='keys',tablefmt='grid',numalign='left', stralign='left')}")
                         print(f"Essa é a tabela CC:\n\n{tabulate(df3, headers='keys', tablefmt='grid', numalign='left', stralign='left')}")
