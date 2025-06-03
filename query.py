@@ -66,11 +66,17 @@ queries = {
     """,
 
     "CC": """
-        WITH dias AS (
+        WITH ultimos_dois_dias AS (
+            SELECT DISTINCT data_atualizacao
+            FROM orcado
+            ORDER BY data_atualizacao DESC
+            OFFSET 0 ROWS FETCH NEXT 2 ROWS ONLY
+        ),
+        dias AS (
             SELECT 
                 MAX(data_atualizacao) AS data_atual,
-                DATEADD(DAY, -1, MAX(data_atualizacao)) AS data_anterior
-            FROM orcado
+                MIN(data_atualizacao) AS data_anterior
+            FROM ultimos_dois_dias
         ),
         orcado_dia_atual AS (
             SELECT 
@@ -133,13 +139,18 @@ queries = {
         ORDER BY A.CODCCUSTO, TOTAL_DIFERENCA DESC;
     """,
 
-    "ID": """
-        
-        WITH dias AS (
+   "ID": """
+        WITH ultimos_dois_dias AS (
+            SELECT DISTINCT data_atualizacao
+            FROM orcado
+            ORDER BY data_atualizacao DESC
+            OFFSET 0 ROWS FETCH NEXT 2 ROWS ONLY
+        ),
+        dias AS (
             SELECT 
                 MAX(data_atualizacao) AS data_atual,
-                DATEADD(DAY, -1, MAX(data_atualizacao)) AS data_anterior
-            FROM orcado
+                MIN(data_atualizacao) AS data_anterior
+            FROM ultimos_dois_dias
         ),
         orcado_dia_atual AS (
             SELECT IDORCAMENTO, SEQITMORCA, CODCCUSTO, VALORORCADO, data_atualizacao
