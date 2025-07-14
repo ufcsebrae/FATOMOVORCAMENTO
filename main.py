@@ -9,7 +9,7 @@ import pandas as pd
 
 def main():
        #conexão com o banco de dados e execução da query que preenche o FINANCA
-      servername = "spsvsql39\\metas"
+      servername = "spsvsql39"
       dbname = "HubDados"
       engine = create_engine(
         f'mssql+pyodbc://@{servername}/{dbname}?trusted_connection=yes&driver=ODBC+Driver+17+for+SQL+Server'
@@ -45,7 +45,7 @@ def main():
       finally:
                   close_connection(engine)
       
-      servername2 = "spsvsql39\\metas"
+      servername2 = "spsvsql39"
       dbname2 = "FINANCA"
       engine2 = create_engine(
              f'mssql+pyodbc://@{servername2}/{dbname2}?trusted_connection=yes&driver=ODBC+Driver+17+for+SQL+Server'

@@ -3,9 +3,12 @@ from sqlalchemy import create_engine, text
 import pandas as pd
 from datetime import timedelta
 from sqlalchemy.exc import SQLAlchemyError
+import logging
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 # Definir as variáveis da conexão
-servername = "spsvsql39\\metas"
+servername = "spsvsql39"
 dbname = "FINANCA"
 driver = "ODBC+Driver+17+for+SQL+Server"
 
