@@ -40,7 +40,6 @@ def enviar_relatorio_email(destinatario, ASSUNTO, dataframeTOTAL,dataframeCC,dat
         mensagem.Subject = ASSUNTO
         mensagem.HTMLBody = CORPO
         mensagem.To = destinatario
-
         mensagem.Send()
         print("📧 E-mail enviado com sucesso!")
 
